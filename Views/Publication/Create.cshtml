@@ -1,0 +1,34 @@
+﻿@{
+    ViewData["Title"] = "Create Post";
+}
+<form asp-action="Create" asp-controller="Publication" method="post" enctype="multipart/form-data" class="form">
+    <p>
+        <label>Заголовок</label>
+        <input name="Title" class="form-control" />
+    </p>
+    <div id="input0"></div>
+    <div class="add" onclick="addImgInput()">Фото</div>
+    <div class="add" onclick="addTextInput()">Текст</div>
+    <p>
+        <input type="submit" value="Добавить" />
+    </p>
+</form>
+
+<script>
+    var x = 0;
+
+    function addImgInput() {
+        if (x < 20) {
+            var str = '<input name = "Img" type="file" class="form-control"><input type="hidden" name="items" value="Img" /><div id="input' + (x + 1) + '"></div>';
+            document.getElementById('input' + x).innerHTML = str;
+            x++;
+        } 
+    }
+    function addTextInput() {
+        if (x < 20) {
+            var str = '<textarea name="Text"></textarea><input type = "hidden" name = "items" value = "Text" /><div id="input' + (x + 1) + '"></div>';
+            document.getElementById('input' + x).innerHTML = str;
+            x++;
+        }
+    }
+</script>

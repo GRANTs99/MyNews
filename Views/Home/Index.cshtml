@@ -1,0 +1,17 @@
+﻿@model IEnumerable<MyNews.Models.Publication>
+@{
+    ViewData["Title"] = "Home Page";
+}
+
+<div class="text-center">
+    @{if (Model != null)
+        {
+
+            foreach (var post in Model)
+            {
+                await Html.RenderPartialAsync("Post", post);
+            }
+        }
+    }
+</div>
+ 
