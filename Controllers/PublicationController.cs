@@ -162,5 +162,24 @@ namespace MyNews.Controllers
             }
             return NotFound();
         }
+        [HttpPost]
+        public async void AddLike(int postId)
+        {
+            Publication post = _context.Publications.Where(p => p.Id == postId).FirstOrDefault();
+            if (post != null)
+            {
+                User user = await _userManager.FindByNameAsync(User.Identity.Name);
+                if (user != post.UserLike.Where(p => p.UserName == user.UserName).FirstOrDefault())
+                {
+                    post.UserLike.Add(user);
+                }
+                else
+                {
+                    post.UserLike.Remove(user);
+                }
+                _context.Publications.Update(post);
+                await _context.SaveChangesAsync();
+            }
+        }
     }
 }

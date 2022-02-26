@@ -16,5 +16,8 @@ namespace MyNews.Models
         public List<PublicationItem> Items { get; set; }
         public int UserId { get; set; }
         public User User { get; set; }
+        public List<User> UserLike { get; set; }
+        public int Like { get {return UserLike.Count; } }
+
     }
 }
