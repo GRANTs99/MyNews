@@ -10,8 +10,8 @@ using MyNews.Models;
 namespace MyNews.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20220303000053_SetupDatabaseFromScratch")]
-    partial class SetupDatabaseFromScratch
+    [Migration("20220303174245_TEST")]
+    partial class TEST
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -259,9 +259,6 @@ namespace MyNews.Migrations
                         .HasColumnType("nvarchar(450)");
 
                     b.Property<int>("AccessFailedCount")
-                        .HasColumnType("int");
-
-                    b.Property<int>("AvatarId")
                         .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")

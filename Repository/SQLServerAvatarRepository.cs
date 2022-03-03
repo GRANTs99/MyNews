@@ -1,4 +1,5 @@
-﻿using MyNews.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using MyNews.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,16 @@ namespace MyNews.Repository
         public IEnumerable<Avatar> GetAll()
         {
             return _context.Avatars.ToList();
+        }
+
+        public async Task<IEnumerable<Avatar>> GetAllAsync()
+        {
+            return await _context.Avatars.ToListAsync();
+        }
+
+        public async Task<Avatar> GetAsync(int id)
+        {
+            return await _context.Avatars.Where(p => p.Id == id).FirstOrDefaultAsync();
         }
 
         public void Remove(Avatar entity)

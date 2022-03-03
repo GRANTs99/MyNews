@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyNews.Models;
+using MyNews.Repository;
 using MyNews.ViewModels.Publication;
 using System;
 using System.Collections.Generic;
@@ -18,12 +19,16 @@ namespace MyNews.Controllers
     public class PublicationApiController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
-        private readonly ApplicationContext _context;
+        private readonly IRepository<Publication> _contextPublication;
+        private readonly IRepository<PublicationItem> _contextPublicationItem;
+        private readonly IRepository<Like> _contextLike;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        public PublicationApiController(UserManager<User> userManager, SignInManager<User> signInManager, ApplicationContext context, RoleManager<IdentityRole> roleManager)
+        public PublicationApiController(UserManager<User> userManager, SignInManager<User> signInManager, IRepository<Publication> contextP, IRepository<PublicationItem> contextPI, IRepository<Like> contextL, RoleManager<IdentityRole> roleManager)
         {
-            _context = context;
+            _contextPublication = contextP;
+            _contextPublicationItem = contextPI;
+            _contextLike = contextL;
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
@@ -32,13 +37,14 @@ namespace MyNews.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<Publication>>> Get()
         {
-            return await _context.Publications.Include(p => p.Items).ToListAsync();
+            var posts = await _contextPublication.GetAllAsync();
+            return new ObjectResult(posts);
         }
 
         [HttpGet("{id}")]
-        public ActionResult<Publication> Get(int id)
+        public async Task<ActionResult<Publication>> Get(int id)
         {
-            Publication post = _context.Publications.Where(p => p.Id == id).FirstOrDefault();
+            Publication post = await _contextPublication.GetAsync(id);
             if (post == null)
                 return NotFound();
             return new ObjectResult(post);
@@ -65,7 +71,7 @@ namespace MyNews.Controllers
                                 imageData = binaryReader.ReadBytes((int)model.Img.Skip(imgcount).FirstOrDefault().Length);
                             }
                             var item = new PublicationItem(post, "Img", model.Img.Skip(imgcount).FirstOrDefault().FileName, imageData);
-                            _context.PublicationItems.Add(item);
+                            _contextPublicationItem.Add(item);
                             imgcount++;
                         }
                         else
@@ -77,12 +83,12 @@ namespace MyNews.Controllers
                     if (p == "Text")
                     {
                         var item = new PublicationItem(post, "Text", model.Text.Skip(textcount).FirstOrDefault(), null);
-                        _context.PublicationItems.Add(item);
+                        _contextPublicationItem.Add(item);
                         textcount++;
                     }
                 }
-                _context.Publications.Add(post);
-                _context.SaveChanges();
+                _contextPublication.Add(post);
+                _contextPublication.Save();
 
                 return Ok(post);
             }
@@ -94,7 +100,7 @@ namespace MyNews.Controllers
         {
             if (ModelState.IsValid)
             {
-                Publication post = _context.Publications.Where(p => p.Id == model.Id).FirstOrDefault();
+                Publication post = _contextPublication.GetAll().Where(p => p.Id == model.Id).FirstOrDefault();
                 if (post != null)
                 {
                     if (post.User.UserName != User.Identity.Name)
@@ -116,7 +122,7 @@ namespace MyNews.Controllers
                                     imageData = binaryReader.ReadBytes((int)model.Img.Skip(imgcount).FirstOrDefault().Length);
                                 }
                                 var item = new PublicationItem(post, "Img", model.Img.Skip(imgcount).FirstOrDefault().FileName, imageData);
-                                _context.PublicationItems.Add(item);
+                                _contextPublicationItem.Add(item);
                                 imgcount++;
                             }
                             else
@@ -128,12 +134,12 @@ namespace MyNews.Controllers
                         if (p == "Text")
                         {
                             var item = new PublicationItem(post, "Text", model.Text.Skip(textcount).FirstOrDefault(), null);
-                            _context.PublicationItems.Add(item);
+                            _contextPublicationItem.Add(item);
                             textcount++;
                         }
                     }
-                    _context.Publications.Update(post);
-                    _context.SaveChanges();
+                    _contextPublication.Update(post);
+                    _contextPublication.Save();
                     return Ok(post);
                 }
                 else
@@ -147,7 +153,7 @@ namespace MyNews.Controllers
         [HttpDelete("{id}")]
         public ActionResult<Publication> Delete(int id)
         {
-            Publication post = _context.Publications.Where(p => p.Id == id).FirstOrDefault();
+            Publication post = _contextPublication.GetAll().Where(p => p.Id == id).FirstOrDefault();
             if (post != null)
             {
                 if (User.Identity.Name != post.User.UserName)
@@ -156,9 +162,9 @@ namespace MyNews.Controllers
                 }
                 foreach(var p in post.Items)
                 {
-                    _context.PublicationItems.Remove(p);
+                    _contextPublicationItem.Remove(p);
                 }
-                _context.Publications.Remove(post);
+                _contextPublication.Remove(post);
                 return NoContent();
             }
             return NotFound();

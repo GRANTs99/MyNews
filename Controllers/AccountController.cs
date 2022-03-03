@@ -43,7 +43,6 @@ namespace MyNews.Controllers
                     }
                     Avatar avatar = new Avatar { User = user, Data = imageData, FileName = model.Avatar.FileName };
                     _contextAvatar.Add(avatar);
-                    _contextAvatar.Save();
                     user.Avatar = avatar;
                 }
                 else
@@ -51,7 +50,6 @@ namespace MyNews.Controllers
                     byte[] imageData = System.IO.File.ReadAllBytes("default.png");
                     Avatar avatar = new Avatar { User = user, Data = imageData, FileName = "default.png" };
                     _contextAvatar.Add(avatar);
-                    _contextAvatar.Save();
                     user.Avatar = avatar;
 
                 }
@@ -59,6 +57,7 @@ namespace MyNews.Controllers
                 await _userManager.AddToRoleAsync(user, "simpleuser");
                 if (result.Succeeded)
                 {
+                    _contextAvatar.Save();
                     await _signInManager.SignInAsync(user, false);
                     return RedirectToAction("Index", "Home");
                 }

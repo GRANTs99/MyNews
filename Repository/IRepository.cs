@@ -13,5 +13,7 @@ namespace MyNews.Repository
         IEnumerable<T> GetAll();
         void Save();
         void Update(T item);
+        Task<T> GetAsync(int id);
+        Task<IEnumerable<T>> GetAllAsync();
     }
 }

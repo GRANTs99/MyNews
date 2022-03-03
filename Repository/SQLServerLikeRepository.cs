@@ -1,4 +1,5 @@
-﻿using MyNews.Models;
+﻿using Microsoft.EntityFrameworkCore;
+using MyNews.Models;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -26,6 +27,16 @@ namespace MyNews.Repository
         public IEnumerable<Like> GetAll()
         {
             return _context.Likes.ToList();
+        }
+
+        public async Task<IEnumerable<Like>> GetAllAsync()
+        {
+            return await _context.Likes.ToListAsync();
+        }
+
+        public async Task<Like> GetAsync(int id)
+        {
+            return await _context.Likes.Where(p => p.Id == id).FirstOrDefaultAsync();
         }
 
         public void Remove(Like entity)

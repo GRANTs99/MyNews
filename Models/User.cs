@@ -10,7 +10,6 @@ namespace MyNews.Models
     public class User : IdentityUser
     {
         public List<Publication> Publications { get; set; }
-        public int AvatarId { get; set; }
         public Avatar Avatar { get; set; }
     }
 }

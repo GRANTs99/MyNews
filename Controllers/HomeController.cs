@@ -27,7 +27,7 @@ namespace MyNews.Controllers
         }
         public IActionResult Index()
         {
-            return View(_contextPublication.GetAll());//Include(PublicationItems).ThenInclude(Avatar)
+            return View(_contextPublication.GetAll());
         }
 
         public IActionResult Privacy()

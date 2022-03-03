@@ -75,7 +75,7 @@ namespace MyNews.Controllers
             return RedirectToAction("UserList");
         }
 
-        public IActionResult PublicationList() => View(_contextPublication.GetAll());//Include(PublicationItems)
+        public IActionResult PublicationList() => View(_contextPublication.GetAll());
         [HttpPost]
         public ActionResult DeletePublication(int id)
         {
