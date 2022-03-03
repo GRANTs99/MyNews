@@ -9,6 +9,7 @@ namespace MyNews.Models
         public DbSet<Publication> Publications { get; set; }
         public DbSet<PublicationItem> PublicationItems { get; set; }
         public DbSet<Avatar> Avatars { get; set; }
+        public DbSet<Like> Likes { get; set; }
         public ApplicationContext(DbContextOptions<ApplicationContext> options)
             : base(options)
         {

@@ -6,18 +6,19 @@ using MyNews.ViewModels.Account;
 using System.IO;
 using System.Linq;
 using Microsoft.EntityFrameworkCore;
+using MyNews.Repository;
 
 namespace MyNews.Controllers
 {
     public class AccountController : Controller
     {
         private readonly UserManager<User> _userManager;
-        private readonly ApplicationContext _context;
+        private readonly IRepository<Avatar> _contextAvatar;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, ApplicationContext context, RoleManager<IdentityRole> roleManager)
+        public AccountController(UserManager<User> userManager, SignInManager<User> signInManager, IRepository<Avatar> contextAv, RoleManager<IdentityRole> roleManager)
         {
-            _context = context;
+            _contextAvatar = contextAv;
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
@@ -36,29 +37,28 @@ namespace MyNews.Controllers
                 if (model.Avatar != null)
                 {
                     byte[] imageData = null;
-                    // считываем переданный файл в массив байтов
                     using (var binaryReader = new BinaryReader(model.Avatar.OpenReadStream()))
                     {
                         imageData = binaryReader.ReadBytes((int)model.Avatar.Length);
                     }
                     Avatar avatar = new Avatar { User = user, Data = imageData, FileName = model.Avatar.FileName };
-                    _context.Avatars.Add(avatar);
+                    _contextAvatar.Add(avatar);
+                    _contextAvatar.Save();
                     user.Avatar = avatar;
                 }
                 else
                 {
                     byte[] imageData = System.IO.File.ReadAllBytes("default.png");
                     Avatar avatar = new Avatar { User = user, Data = imageData, FileName = "default.png" };
-                    _context.Avatars.Add(avatar);
+                    _contextAvatar.Add(avatar);
+                    _contextAvatar.Save();
                     user.Avatar = avatar;
 
                 }
-                // добавляем пользователя
                 var result = await _userManager.CreateAsync(user, model.Password);
                 await _userManager.AddToRoleAsync(user, "simpleuser");
                 if (result.Succeeded)
                 {
-                    // установка куки
                     await _signInManager.SignInAsync(user, false);
                     return RedirectToAction("Index", "Home");
                 }
@@ -72,7 +72,7 @@ namespace MyNews.Controllers
             }
             return View(model);
         }
-        //Авторизация
+
         [HttpGet]
         public IActionResult Login(string returnUrl = null)
         {
@@ -88,7 +88,6 @@ namespace MyNews.Controllers
                 var result = await _signInManager.PasswordSignInAsync(model.Name, model.Password, model.RememberMe, false);
                 if (result.Succeeded)
                 {
-                    // проверяем, принадлежит ли URL приложению
                     if (!string.IsNullOrEmpty(model.ReturnUrl) && Url.IsLocalUrl(model.ReturnUrl))
                     {
                         return Redirect(model.ReturnUrl);
@@ -110,7 +109,6 @@ namespace MyNews.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            // удаляем аутентификационные куки
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
@@ -187,20 +185,18 @@ namespace MyNews.Controllers
                 {
                     user.Email = model.Email;
                     user.UserName = model.Name;
-
                     if (model.Avatar != null)
                     {
                         byte[] imageData = null;
-                        // считываем переданный файл в массив байтов
                         using (var binaryReader = new BinaryReader(model.Avatar.OpenReadStream()))
                         {
                             imageData = binaryReader.ReadBytes((int)model.Avatar.Length);
                         }
                         Avatar avatar = new Avatar { User = user, Data = imageData, FileName = model.Avatar.FileName };
-                        _context.Avatars.Add(avatar);
+                        _contextAvatar.Add(avatar);
+                        _contextAvatar.Save();
                         user.Avatar = avatar;
                     }
-
                     var result = await _userManager.UpdateAsync(user);
                     if (result.Succeeded)
                     {

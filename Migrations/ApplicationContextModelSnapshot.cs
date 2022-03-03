@@ -175,6 +175,31 @@ namespace MyNews.Migrations
                     b.ToTable("Avatars");
                 });
 
+            modelBuilder.Entity("MyNews.Models.Like", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("PublicationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId1")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PublicationId");
+
+                    b.HasIndex("UserId1");
+
+                    b.ToTable("Likes");
+                });
+
             modelBuilder.Entity("MyNews.Models.Publication", b =>
                 {
                     b.Property<int>("Id")
@@ -189,15 +214,12 @@ namespace MyNews.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId1")
+                    b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId1");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Publications");
                 });
@@ -357,11 +379,28 @@ namespace MyNews.Migrations
                     b.Navigation("User");
                 });
 
+            modelBuilder.Entity("MyNews.Models.Like", b =>
+                {
+                    b.HasOne("MyNews.Models.Publication", "Publication")
+                        .WithMany("Likes")
+                        .HasForeignKey("PublicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyNews.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1");
+
+                    b.Navigation("Publication");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MyNews.Models.Publication", b =>
                 {
                     b.HasOne("MyNews.Models.User", "User")
                         .WithMany("Publications")
-                        .HasForeignKey("UserId1");
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -380,6 +419,8 @@ namespace MyNews.Migrations
             modelBuilder.Entity("MyNews.Models.Publication", b =>
                 {
                     b.Navigation("Items");
+
+                    b.Navigation("Likes");
                 });
 
             modelBuilder.Entity("MyNews.Models.User", b =>

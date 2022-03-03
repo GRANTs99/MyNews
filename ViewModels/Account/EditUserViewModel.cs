@@ -19,7 +19,6 @@ namespace MyNews.ViewModels.Account
             if (Avatar != null)
             {
                 byte[] imageData = null;
-                // считываем переданный файл в массив байтов
                 using (var binaryReader = new BinaryReader(Avatar.OpenReadStream()))
                 {
                     imageData = binaryReader.ReadBytes((int)Avatar.Length);

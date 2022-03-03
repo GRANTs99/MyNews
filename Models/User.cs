@@ -9,10 +9,8 @@ namespace MyNews.Models
 {
     public class User : IdentityUser
     {
-        //Сделать UserName уникальным
         public List<Publication> Publications { get; set; }
-        public Avatar Avatar { get; set; }
-        [ForeignKey("AvatarId")]
         public int AvatarId { get; set; }
+        public Avatar Avatar { get; set; }
     }
 }

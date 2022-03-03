@@ -18,7 +18,6 @@ namespace MyNews.Models
 
         public PublicationItem()
         {
-
         }
         public PublicationItem(Publication publication, string type, string text, byte[] data)
         {

@@ -11,8 +11,8 @@ namespace MyNews.Models
         public int Id { get; set; }
         public string FileName { get; set; }
         public byte[] Data { get; set; }
+        public string UserId { get; set; }
         [ForeignKey("UserId")]
         public User User { get; set; }
-        public string UserId { get; set; }
     }
 }

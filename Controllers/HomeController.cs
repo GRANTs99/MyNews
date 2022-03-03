@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using MyNews.Models;
+using MyNews.Repository;
 using MyNews.ViewModels.Home;
 using System;
 using System.Collections.Generic;
@@ -14,17 +15,19 @@ namespace MyNews.Controllers
 {
     public class HomeController : Controller
     {
-        private readonly ApplicationContext _context;
+        private readonly IRepository<Publication> _contextPublication;
+        private readonly IRepository<PublicationItem> _contextPublicationItem;
         private readonly UserManager<User> _userManager;
 
-        public HomeController(ApplicationContext context, UserManager<User> userManager)
+        public HomeController(IRepository<Publication> contextP, IRepository<PublicationItem> contextPI, UserManager<User> userManager)
         {
-            _context = context;
+            _contextPublication = contextP;
+            _contextPublicationItem = contextPI;
             _userManager = userManager;
         }
         public IActionResult Index()
         {
-            return View(_context.Publications.Include(p => p.Items).Include(u => u.User).ThenInclude(u => u.Avatar));
+            return View(_contextPublication.GetAll());//Include(PublicationItems).ThenInclude(Avatar)
         }
 
         public IActionResult Privacy()

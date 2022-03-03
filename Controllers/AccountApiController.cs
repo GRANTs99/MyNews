@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyNews.Models;
+using MyNews.Repository;
 using MyNews.ViewModels.Account;
 using System;
 using System.Collections.Generic;
@@ -18,12 +19,12 @@ namespace MyNews.Controllers
     public class AccountApiController : ControllerBase
     {
         private readonly UserManager<User> _userManager;
-        private readonly ApplicationContext _context;
+        private readonly IRepository<Avatar> _contextAvatar;
         private readonly SignInManager<User> _signInManager;
         private readonly RoleManager<IdentityRole> _roleManager;
-        public AccountApiController(UserManager<User> userManager, SignInManager<User> signInManager, ApplicationContext context, RoleManager<IdentityRole> roleManager)
+        public AccountApiController(UserManager<User> userManager, SignInManager<User> signInManager, IRepository<Avatar> contextAv, RoleManager<IdentityRole> roleManager)
         {
-            _context = context;
+            _contextAvatar = contextAv;
             _userManager = userManager;
             _signInManager = signInManager;
             _roleManager = roleManager;
@@ -60,7 +61,8 @@ namespace MyNews.Controllers
                     imageData = binaryReader.ReadBytes((int)model.Avatar.Length);
                 }
                 Avatar avatar = new Avatar { User = user, Data = imageData, FileName = model.Avatar.FileName };
-                _context.Avatars.Add(avatar);
+                _contextAvatar.Add(avatar);
+                _contextAvatar.Save();
                 user.Avatar = avatar;
             }
             var result = await _userManager.CreateAsync(user, model.Password);
@@ -122,6 +124,7 @@ namespace MyNews.Controllers
             }
             return BadRequest(model);
         }
+
         [Authorize]
         [HttpPut]
         public async Task<ActionResult<User>> Put(EditUserViewModel model)
@@ -143,7 +146,8 @@ namespace MyNews.Controllers
                             imageData = binaryReader.ReadBytes((int)model.Avatar.Length);
                         }
                         Avatar avatar = new Avatar { User = user, Data = imageData, FileName = model.Avatar.FileName };
-                        _context.Avatars.Add(avatar);
+                        _contextAvatar.Add(avatar);
+                        _contextAvatar.Save();
                         user.Avatar = avatar;
                     }
 
@@ -162,6 +166,7 @@ namespace MyNews.Controllers
             }
             return BadRequest();
         }
+
         [Authorize]
         [HttpDelete("{name}")]
         public async Task<ActionResult<User>> Delete(string Name)

@@ -10,8 +10,8 @@ using MyNews.Models;
 namespace MyNews.Migrations
 {
     [DbContext(typeof(ApplicationContext))]
-    [Migration("20220218234826_NewMigration")]
-    partial class NewMigration
+    [Migration("20220303000053_SetupDatabaseFromScratch")]
+    partial class SetupDatabaseFromScratch
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
@@ -152,6 +152,56 @@ namespace MyNews.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
+            modelBuilder.Entity("MyNews.Models.Avatar", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<byte[]>("Data")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("FileName")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId")
+                        .IsUnique()
+                        .HasFilter("[UserId] IS NOT NULL");
+
+                    b.ToTable("Avatars");
+                });
+
+            modelBuilder.Entity("MyNews.Models.Like", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<int>("PublicationId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("UserId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UserId1")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PublicationId");
+
+                    b.HasIndex("UserId1");
+
+                    b.ToTable("Likes");
+                });
+
             modelBuilder.Entity("MyNews.Models.Publication", b =>
                 {
                     b.Property<int>("Id")
@@ -166,15 +216,12 @@ namespace MyNews.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UserId1")
+                    b.Property<string>("UserId")
                         .HasColumnType("nvarchar(450)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("UserId1");
+                    b.HasIndex("UserId");
 
                     b.ToTable("Publications");
                 });
@@ -214,8 +261,8 @@ namespace MyNews.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("int");
 
-                    b.Property<byte[]>("Avatar")
-                        .HasColumnType("varbinary(max)");
+                    b.Property<int>("AvatarId")
+                        .HasColumnType("int");
 
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
@@ -325,11 +372,37 @@ namespace MyNews.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("MyNews.Models.Avatar", b =>
+                {
+                    b.HasOne("MyNews.Models.User", "User")
+                        .WithOne("Avatar")
+                        .HasForeignKey("MyNews.Models.Avatar", "UserId");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("MyNews.Models.Like", b =>
+                {
+                    b.HasOne("MyNews.Models.Publication", "Publication")
+                        .WithMany("Likes")
+                        .HasForeignKey("PublicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("MyNews.Models.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1");
+
+                    b.Navigation("Publication");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("MyNews.Models.Publication", b =>
                 {
                     b.HasOne("MyNews.Models.User", "User")
                         .WithMany("Publications")
-                        .HasForeignKey("UserId1");
+                        .HasForeignKey("UserId");
 
                     b.Navigation("User");
                 });
@@ -348,10 +421,14 @@ namespace MyNews.Migrations
             modelBuilder.Entity("MyNews.Models.Publication", b =>
                 {
                     b.Navigation("Items");
+
+                    b.Navigation("Likes");
                 });
 
             modelBuilder.Entity("MyNews.Models.User", b =>
                 {
+                    b.Navigation("Avatar");
+
                     b.Navigation("Publications");
                 });
 #pragma warning restore 612, 618

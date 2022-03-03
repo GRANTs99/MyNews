@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using MyNews.Models;
+using MyNews.Repository;
 using MyNews.ViewModels.Admin;
 using System;
 using System.Collections.Generic;
@@ -15,23 +16,21 @@ namespace MyNews.Controllers
     public class AdminController : Controller
     {
         private readonly UserManager<User> _userManager;
-        private readonly ApplicationContext _context;
+        private readonly IRepository<Publication> _contextPublication;
         private readonly RoleManager<IdentityRole> _roleManager;
-        public AdminController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, ApplicationContext context)
+        public AdminController(RoleManager<IdentityRole> roleManager, UserManager<User> userManager, IRepository<Publication> contextP)
         {
             _roleManager = roleManager;
             _userManager = userManager;
-            _context = context;
+            _contextPublication = contextP;
         }
         [Authorize(Roles = "admin")]
         public IActionResult UserList() => View(_userManager.Users.ToList());
         public async Task<IActionResult> EditRole(string userId)
         {
-            // получаем пользователя
             User user = await _userManager.FindByIdAsync(userId);
             if (user != null)
             {
-                // получем список ролей пользователя
                 var userRoles = await _userManager.GetRolesAsync(user);
                 var allRoles = _roleManager.Roles.ToList();
                 ChangeRoleViewModel model = new ChangeRoleViewModel
@@ -50,23 +49,15 @@ namespace MyNews.Controllers
         [HttpPost]
         public async Task<IActionResult> EditRole(string userId, List<string> roles)
         {
-            // получаем пользователя
             User user = await _userManager.FindByIdAsync(userId);
             if (user != null)
             {
-                // получем список ролей пользователя
                 var userRoles = await _userManager.GetRolesAsync(user);
-                // получаем все роли
                 var allRoles = _roleManager.Roles.ToList();
-                // получаем список ролей, которые были добавлены
                 var addedRoles = roles.Except(userRoles);
-                // получаем роли, которые были удалены
                 var removedRoles = userRoles.Except(roles);
-
                 await _userManager.AddToRolesAsync(user, addedRoles);
-
                 await _userManager.RemoveFromRolesAsync(user, removedRoles);
-
                 return RedirectToAction("UserList");
             }
 
@@ -84,18 +75,17 @@ namespace MyNews.Controllers
             return RedirectToAction("UserList");
         }
 
-        public IActionResult PublicationList() => View(_context.Publications.Include(p => p.Items).ToList());
+        public IActionResult PublicationList() => View(_contextPublication.GetAll());//Include(PublicationItems)
         [HttpPost]
         public ActionResult DeletePublication(int id)
         {
-            Publication post = _context.Publications.Where(p => p.Id == id).FirstOrDefault();
+            Publication post = _contextPublication.Get(id);
             if (post != null)
             {
-                _context.Publications.Remove(post);
-                _context.SaveChanges();
+                _contextPublication.Remove(post);
+                _contextPublication.Save();
             }
             return RedirectToAction("PublicationList");
         }
-
     }
 }

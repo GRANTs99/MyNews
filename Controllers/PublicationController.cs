@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using MyNews.Models;
+using MyNews.Repository;
 using MyNews.ViewModels.Publication;
 using System;
 using System.Collections.Generic;
@@ -14,13 +15,17 @@ namespace MyNews.Controllers
     [Authorize]
     public class PublicationController : Controller
     {
-        private readonly ApplicationContext _context;
         private readonly UserManager<User> _userManager;
+        private readonly IRepository<Publication> _contextPublication;
+        private readonly IRepository<PublicationItem> _contextPublicationItem;
+        private readonly IRepository<Like> _contextLike;
 
-        public PublicationController(ApplicationContext context, UserManager<User> userManager)
+        public PublicationController(IRepository<Publication> contextP, IRepository<PublicationItem> contextPI, IRepository<Like> contextL, UserManager<User> userManager)
         {
-            _context = context;
+            _contextPublication = contextP;
+            _contextPublicationItem = contextPI;
             _userManager = userManager;
+            _contextLike = contextL;
         }
 
         [HttpGet]
@@ -49,12 +54,11 @@ namespace MyNews.Controllers
                                 imageData = binaryReader.ReadBytes((int)pvm.Img.Skip(imgcount).FirstOrDefault().Length);
                             }
                             var item = new PublicationItem(post, "Img", pvm.Img.Skip(imgcount).FirstOrDefault().FileName, imageData);
-                            _context.PublicationItems.Add(item);
+                            _contextPublicationItem.Add(item);
                             imgcount++;
                         }
                         else
                         {
-                            //Не удалось загрузить картинку
                             return View(pvm);
                         }
 
@@ -62,21 +66,20 @@ namespace MyNews.Controllers
                     if (p == "Text")
                     {
                         var item = new PublicationItem(post, "Text", pvm.Text.Skip(textcount).FirstOrDefault(), null);
-                        _context.PublicationItems.Add(item);
+                        _contextPublicationItem.Add(item);
                         textcount++;
                     }
                 }
-                _context.Publications.Add(post);
-                _context.SaveChanges();
+                _contextPublication.Add(post);
+                _contextPublication.Save();
 
                 return RedirectToAction("Index");
             }
             return View(pvm);
         }
-
         public IActionResult Edit(int id)
         {
-            Publication post = _context.Publications.Where(p => p.Id == id).FirstOrDefault();
+            Publication post = _contextPublication.Get(id);
             if (post == null)
             {
                 return NotFound();
@@ -94,7 +97,7 @@ namespace MyNews.Controllers
         {
             if (ModelState.IsValid)
             {
-                Publication post = _context.Publications.Where(p => p.Id == model.Id).FirstOrDefault();
+                Publication post = _contextPublication.Get(model.Id);
                 if (post != null)
                 {
                     post.Items.Clear();
@@ -112,12 +115,11 @@ namespace MyNews.Controllers
                                     imageData = binaryReader.ReadBytes((int)model.Img.Skip(imgcount).FirstOrDefault().Length);
                                 }
                                 var item = new PublicationItem(post, "Img", model.Img.Skip(imgcount).FirstOrDefault().FileName, imageData);
-                                _context.PublicationItems.Add(item);
+                                _contextPublicationItem.Add(item);
                                 imgcount++;
                             }
                             else
                             {
-                                //Не удалось загрузить картинку
                                 return View(model);
                             }
 
@@ -125,12 +127,12 @@ namespace MyNews.Controllers
                         if (p == "Text")
                         {
                             var item = new PublicationItem(post, "Text", model.Text.Skip(textcount).FirstOrDefault(), null);
-                            _context.PublicationItems.Add(item);
+                            _contextPublicationItem.Add(item);
                             textcount++;
                         }
                     }
-                    _context.Publications.Update(post);
-                    _context.SaveChanges();
+                    _contextPublication.Update(post);
+                    _contextPublication.Save();
                 }
             }
             return View(model);
@@ -146,7 +148,7 @@ namespace MyNews.Controllers
         [HttpPost]
         public ActionResult<Publication> Delete(int id)
         {
-            Publication post = _context.Publications.Where(p => p.Id == id).FirstOrDefault();
+            Publication post = _contextPublication.Get(id);
             if (post != null)
             {
                 if (User.Identity.Name != post.User.UserName)
@@ -155,9 +157,9 @@ namespace MyNews.Controllers
                 }
                 foreach (var p in post.Items)
                 {
-                    _context.PublicationItems.Remove(p);
+                    _contextPublicationItem.Remove(p);
                 }
-                _context.Publications.Remove(post);
+                _contextPublication.Remove(post);
                 return RedirectToAction("My","Account");
             }
             return NotFound();
@@ -165,20 +167,23 @@ namespace MyNews.Controllers
         [HttpPost]
         public async void AddLike(int postId)
         {
-            Publication post = _context.Publications.Where(p => p.Id == postId).FirstOrDefault();
+            Publication post = _contextPublication.Get(postId);
             if (post != null)
             {
                 User user = await _userManager.FindByNameAsync(User.Identity.Name);
-                if (user != post.UserLike.Where(p => p.UserName == user.UserName).FirstOrDefault())
+                Like like = new Like { User = user, Publication = post };
+                if (null == post.Likes.Where(p => p.User.UserName == user.UserName).FirstOrDefault())
                 {
-                    post.UserLike.Add(user);
+                    post.Likes.Add(like);
+                    _contextLike.Add(like);
                 }
                 else
                 {
-                    post.UserLike.Remove(user);
+                    post.Likes.Remove(like);
+                    _contextLike.Remove(like);
                 }
-                _context.Publications.Update(post);
-                await _context.SaveChangesAsync();
+                _contextPublication.Update(post);
+                _contextPublication.Save();
             }
         }
     }
